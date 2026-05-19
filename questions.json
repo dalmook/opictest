@@ -1,0 +1,38 @@
+[
+  {
+    "id": 1,
+    "category": "자기소개",
+    "title": "Question 1",
+    "text": "Please tell me about yourself, including your daily routine.",
+    "audio": "assets/audio/q1.mp3",
+    "prepSeconds": 20,
+    "answerSeconds": 40
+  },
+  {
+    "id": 2,
+    "category": "집/동네",
+    "title": "Question 2",
+    "text": "Describe your home and neighborhood in detail.",
+    "audio": "assets/audio/q2.mp3",
+    "prepSeconds": 20,
+    "answerSeconds": 60
+  },
+  {
+    "id": 3,
+    "category": "취미",
+    "title": "Question 3",
+    "text": "Talk about one hobby you enjoy and why you like it.",
+    "audio": "assets/audio/q3.mp3",
+    "prepSeconds": 15,
+    "answerSeconds": 60
+  },
+  {
+    "id": 4,
+    "category": "돌발",
+    "title": "Question 4",
+    "text": "You had a problem while traveling. Explain what happened and how you solved it.",
+    "audio": "assets/audio/q4.mp3",
+    "prepSeconds": 15,
+    "answerSeconds": 90
+  }
+]
