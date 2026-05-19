@@ -1,161 +1,117 @@
 const screens = {
   intro: document.getElementById("introScreen"),
   survey: document.getElementById("surveyScreen"),
+  self: document.getElementById("selfScreen"),
+  setup: document.getElementById("setupScreen"),
   exam: document.getElementById("examScreen"),
   result: document.getElementById("resultScreen")
 };
-
 const progressLabel = document.getElementById("progressLabel");
 const surveyForm = document.getElementById("surveyForm");
+const selfForm = document.getElementById("selfForm");
 const summary = document.getElementById("summary");
-
+const totalTimerEl = document.getElementById("totalTimer");
 const questionTitle = document.getElementById("questionTitle");
 const questionCategory = document.getElementById("questionCategory");
 const questionText = document.getElementById("questionText");
 const questionAudio = document.getElementById("questionAudio");
-const prepTimerEl = document.getElementById("prepTimer");
-const answerTimerEl = document.getElementById("answerTimer");
 
 const startBtn = document.getElementById("startBtn");
 const surveyNextBtn = document.getElementById("surveyNextBtn");
+const selfNextBtn = document.getElementById("selfNextBtn");
+const examStartBtn = document.getElementById("examStartBtn");
+const micBtn = document.getElementById("micBtn");
 const playBtn = document.getElementById("playBtn");
-const skipBtn = document.getElementById("skipBtn");
+const nextBtn = document.getElementById("nextBtn");
 const restartBtn = document.getElementById("restartBtn");
 
-let surveyData = [];
-let questionData = [];
-let answers = {};
-let currentQuestion = 0;
-let prepLeft = 0;
-let answerLeft = 0;
-let timer = null;
+let surveyData = [], questionData = [], config = null;
+let currentQuestion = 0, totalLeft = 0, timer = null;
+const state = { survey: {}, selfLevel: null, micChecked: false };
 
 const format = (s) => `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
-
-function show(screen) {
-  Object.values(screens).forEach((el) => el.classList.remove("active"));
-  screens[screen].classList.add("active");
-}
+const show = (k) => Object.entries(screens).forEach(([n, el]) => el.classList.toggle("active", n === k));
 
 async function loadData() {
-  const [s, q] = await Promise.all([fetch("survey.json"), fetch("questions.json")]);
+  const [s, q, c] = await Promise.all([fetch("survey.json"), fetch("questions.json"), fetch("test-config.json")]);
   surveyData = await s.json();
   questionData = await q.json();
+  config = await c.json();
 }
 
 function renderSurvey() {
   surveyForm.innerHTML = "";
   surveyData.forEach((item) => {
-    const wrap = document.createElement("div");
-    wrap.className = "survey-item";
-    wrap.innerHTML = `<h3>${item.title}</h3>`;
-
-    const optionList = document.createElement("div");
-    optionList.className = "option-list";
-
-    item.options.forEach((opt, idx) => {
-      const id = `${item.id}_${idx}`;
-      const type = item.multiple ? "checkbox" : "radio";
-      const name = item.id;
-      const row = document.createElement("label");
-      row.className = "option";
-      row.innerHTML = `<input type="${type}" name="${name}" value="${opt}" id="${id}" /> ${opt}`;
-      optionList.appendChild(row);
-    });
-
-    wrap.appendChild(optionList);
-    surveyForm.appendChild(wrap);
+    const type = item.multiple ? "checkbox" : "radio";
+    const html = item.options.map((opt, i) => `<label class="option"><input type="${type}" name="${item.id}" value="${opt}" id="${item.id}_${i}"> ${opt}</label>`).join("");
+    surveyForm.insertAdjacentHTML("beforeend", `<div class="survey-item"><h3>${item.title}</h3><div class="option-list">${html}</div></div>`);
   });
 }
 
+function renderSelfAssessment() {
+  selfForm.innerHTML = config.selfAssessmentLevels.map((lv) => `<label class="option"><input type="radio" name="selfLevel" value="${lv.level}"> ${lv.level}단계 - ${lv.description}</label>`).join("");
+}
+
 function collectSurvey() {
-  const result = {};
+  const out = {};
   surveyData.forEach((item) => {
-    if (item.multiple) {
-      result[item.id] = Array.from(document.querySelectorAll(`input[name="${item.id}"]:checked`)).map((el) => el.value);
-    } else {
-      result[item.id] = document.querySelector(`input[name="${item.id}"]:checked`)?.value || "미선택";
-    }
+    out[item.id] = item.multiple
+      ? Array.from(document.querySelectorAll(`input[name="${item.id}"]:checked`)).map((x) => x.value)
+       : document.querySelector(`input[name="${item.id}"]:checked`)?.value || "미선택";
   });
-  return result;
+  return out;
 }
 
 function renderQuestion() {
   const q = questionData[currentQuestion];
-  questionTitle.textContent = `${q.title} (${currentQuestion + 1}/${questionData.length})`;
-  questionCategory.textContent = `카테고리: ${q.category}`;
+  questionTitle.textContent = `Question ${currentQuestion + 1} / ${questionData.length}`;
+  questionCategory.textContent = q.category;
   questionText.textContent = q.text;
   questionAudio.src = q.audio;
-  prepLeft = q.prepSeconds;
-  answerLeft = q.answerSeconds;
-  prepTimerEl.textContent = format(prepLeft);
-  answerTimerEl.textContent = format(answerLeft);
-  progressLabel.textContent = `문항 ${currentQuestion + 1} 진행 중`;
+  progressLabel.textContent = `Questions (${currentQuestion + 1}/${questionData.length})`;
 }
 
-function runTimer() {
+function startGlobalTimer() {
   clearInterval(timer);
   timer = setInterval(() => {
-    if (prepLeft > 0) {
-      prepLeft -= 1;
-      prepTimerEl.textContent = format(prepLeft);
-      return;
-    }
-    if (answerLeft > 0) {
-      answerLeft -= 1;
-      answerTimerEl.textContent = format(answerLeft);
-      return;
-    }
-    nextQuestion();
+    totalLeft -= 1;
+    totalTimerEl.textContent = format(Math.max(0, totalLeft));
+    if (totalLeft <= 0) finishExam();
   }, 1000);
 }
 
 function nextQuestion() {
-  clearInterval(timer);
   currentQuestion += 1;
-  if (currentQuestion >= questionData.length) {
-    finishExam();
-    return;
-  }
+  if (currentQuestion >= questionData.length) return finishExam();
   renderQuestion();
 }
 
 function finishExam() {
+  clearInterval(timer);
   show("result");
-  progressLabel.textContent = "완료";
-  summary.innerHTML = `
-    <h3>설문 요약</h3>
-    <pre>${JSON.stringify(answers, null, 2)}</pre>
-    <p>총 문항 수: <strong>${questionData.length}</strong></p>
-  `;
+  progressLabel.textContent = "Completed";
+  summary.innerHTML = `<pre>${JSON.stringify(state, null, 2)}</pre><p>총 답변 시간: ${config.totalAnswerMinutes}분</p>`;
 }
 
-startBtn.addEventListener("click", async () => {
-  await loadData();
-  renderSurvey();
-  show("survey");
-  progressLabel.textContent = "설문 진행 중";
-});
-
-surveyNextBtn.addEventListener("click", () => {
-  answers = collectSurvey();
+startBtn.onclick = async () => { await loadData(); renderSurvey(); show("survey"); progressLabel.textContent = "Background Survey"; };
+surveyNextBtn.onclick = () => { state.survey = collectSurvey(); renderSelfAssessment(); show("self"); progressLabel.textContent = "Self Assessment"; };
+selfNextBtn.onclick = () => {
+  state.selfLevel = Number(document.querySelector('input[name="selfLevel"]:checked')?.value || 0);
+  if (!state.selfLevel) return alert("단계를 선택하세요.");
+  show("setup"); progressLabel.textContent = "Setup";
+};
+micBtn.onclick = async () => {
+  try { await navigator.mediaDevices.getUserMedia({ audio: true }); state.micChecked = true; alert("마이크 체크 완료"); }
+  catch { alert("마이크 권한이 필요합니다."); }
+};
+examStartBtn.onclick = () => {
+  totalLeft = config.totalAnswerMinutes * 60;
+  totalTimerEl.textContent = format(totalLeft);
   currentQuestion = 0;
   show("exam");
   renderQuestion();
-});
-
-playBtn.addEventListener("click", () => {
-  questionAudio.currentTime = 0;
-  questionAudio.play();
-  runTimer();
-});
-
-skipBtn.addEventListener("click", nextQuestion);
-
-restartBtn.addEventListener("click", () => {
-  clearInterval(timer);
-  answers = {};
-  currentQuestion = 0;
-  show("intro");
-  progressLabel.textContent = "설문 진행 중";
-});
+  startGlobalTimer();
+};
+playBtn.onclick = () => { questionAudio.currentTime = 0; questionAudio.play(); };
+nextBtn.onclick = nextQuestion;
+restartBtn.onclick = () => location.reload();

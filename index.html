@@ -3,72 +3,65 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>OPIc 모의 테스트</title>
+    <title>OPIc Style Mock</title>
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
     <header class="topbar">
-      <div class="brand">OPIc Mock Test</div>
-      <div id="progressLabel" class="progress-label">설문 진행 중</div>
+      <div class="brand">OPIc Style Mock</div>
+      <div id="progressLabel">Orientation</div>
     </header>
 
     <main class="container">
       <section id="introScreen" class="card active">
         <h1>OPIc 모의 테스트</h1>
-        <p>
-          실제 OPIc 흐름과 유사하게 <strong>Background Survey</strong> →
-          <strong>문항 재생</strong> → <strong>답변 시간</strong> 순서로 진행됩니다.
-        </p>
-        <ul>
-          <li>문항 MP3는 <code>assets/audio</code> 폴더에 넣어주세요.</li>
-          <li>설문/문항은 <code>survey.json</code>, <code>questions.json</code>에서 수정할 수 있습니다.</li>
-          <li>제한 시간 종료 시 자동으로 다음 문항으로 이동합니다.</li>
-        </ul>
-        <button id="startBtn" class="btn primary">모의 테스트 시작</button>
+        <p>Background Survey → Self Assessment → Setup → Questions 흐름으로 진행됩니다.</p>
+        <button id="startBtn" class="btn primary">Start</button>
       </section>
 
       <section id="surveyScreen" class="card">
-        <h2>Background Survey</h2>
-        <p class="muted">본인의 상황과 가까운 항목을 선택해주세요.</p>
+        <h2>Step 1. Background Survey</h2>
         <form id="surveyForm"></form>
-        <div class="actions">
-          <button id="surveyNextBtn" class="btn primary" type="button">시험 시작</button>
-        </div>
+        <button id="surveyNextBtn" class="btn primary" type="button">다음</button>
+      </section>
+
+      <section id="selfScreen" class="card">
+        <h2>Step 2. Self Assessment</h2>
+        <p class="muted">본인의 말하기 수준과 가장 가까운 단계 1개를 선택하세요.</p>
+        <div id="selfForm" class="option-list"></div>
+        <button id="selfNextBtn" class="btn primary" type="button">다음</button>
+      </section>
+
+      <section id="setupScreen" class="card">
+        <h2>Step 3. Setup</h2>
+        <p>마이크 체크 후 시작하세요 (브라우저 권한 허용 필요).</p>
+        <button id="micBtn" class="btn">마이크 체크</button>
+        <button id="examStartBtn" class="btn primary" type="button">시험 시작</button>
       </section>
 
       <section id="examScreen" class="card">
-        <h2 id="questionTitle">Question 1</h2>
+        <h2 id="questionTitle"></h2>
         <p id="questionCategory" class="muted"></p>
-        <div class="audio-wrap">
-          <audio id="questionAudio" controls preload="auto"></audio>
-        </div>
+        <audio id="questionAudio" controls preload="auto"></audio>
         <p id="questionText" class="question-text"></p>
-
-        <div class="timer-box">
+        <div class="timer-box one">
           <div class="timer-item">
-            <span class="label">준비 시간</span>
-            <span id="prepTimer" class="time">00:00</span>
-          </div>
-          <div class="timer-item">
-            <span class="label">답변 시간</span>
-            <span id="answerTimer" class="time">00:00</span>
+            <span class="label">총 남은 답변 시간</span>
+            <span id="totalTimer" class="time">00:00</span>
           </div>
         </div>
-
         <div class="actions">
-          <button id="playBtn" class="btn">문항 재생</button>
-          <button id="skipBtn" class="btn danger">다음 문항</button>
+          <button id="playBtn" class="btn">문제 재생</button>
+          <button id="nextBtn" class="btn primary">다음 문제</button>
         </div>
       </section>
 
       <section id="resultScreen" class="card">
-        <h2>모의 테스트 완료</h2>
-        <p>수고하셨습니다! 아래 내용을 복습해보세요.</p>
+        <h2>완료</h2>
         <div id="summary"></div>
         <button id="restartBtn" class="btn primary">다시 시작</button>
       </section>
     </main>
-
     <script src="app.js" type="module"></script>
   </body>
 </html>

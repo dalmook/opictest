@@ -1,0 +1,11 @@
+{
+  "totalAnswerMinutes": 40,
+  "selfAssessmentLevels": [
+    {"level": 1, "description": "매우 기초적인 의사표현"},
+    {"level": 2, "description": "익숙한 주제 간단 설명"},
+    {"level": 3, "description": "일상 주제 비교적 자세히 설명"},
+    {"level": 4, "description": "경험/의견을 구조적으로 설명"},
+    {"level": 5, "description": "다양한 상황에서 유창하게 설명"},
+    {"level": 6, "description": "복잡한 주제를 논리적으로 설명"}
+  ]
+}
